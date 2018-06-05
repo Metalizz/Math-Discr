@@ -1,0 +1,345 @@
+/*1- REGISTRAR ARTICULOS (DARA DE ALTA N CANTIDAD DE REGISTROS, DONDE LA LLAVE PRIMARIA SERA EL ID DEL ARTICULO, ADEMAS DESCRIPCION 
+  DEL ARTICULO, PRECIO Y CANTIDAD EN EXISTENCIA)
+  2- CONSULTA GENERAL (MOSTRAR LOS DATOS DE LOS ARTICULOS ORDENADOS POR DESCRIPCION)
+  3- VENTAS (Realizar busqueda por ID articulo utilizando la BUSQUEDA SECUENCIAL. si lo encuentra verificar si hay articulos en 
+  existencia si hay proceder a realizar la venta esto implica descontar la cantidad de articulos vendidos a la cantidad en existencia, 
+  mostrar una pequeña nota de venta)
+  4- CONSULTA POR ID (Realizar una busqueda por ID del articulo, al encontrarlo mostrara el resto de los datos en caso contrario 
+  mostrara mensaje de no encontrado, esto debera de hacerse por medio de BUSQUEDA BINARIA UTILIZANDO LA RECURSIVIDAD)
+  5- SALIR */
+
+#include<stdio.h>
+#include<string.h>
+#include<ncurses.h>
+#include<stdlib.h>
+void registro();
+void consulta_g();
+void venta();
+void consultaid();
+void ordena();
+int contador();
+int recursivo(int IDbus,int medio, int fin);
+void recursividad();
+
+typedef struct{ //ESTRUCTURA
+        int ID,exi;
+        float precio;
+        char desc[30];
+}dato;
+
+int main(){
+        int op,op2,IDbus;
+        int inicio=0,fin=0, medio;
+        clear();
+        initscr();
+        do{
+                clear();
+                start_color();
+                init_pair(1, COLOR_BLACK, COLOR_WHITE);
+                init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+                init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+                init_pair(4, COLOR_CYAN, COLOR_BLACK);
+                init_pair(5, COLOR_GREEN, COLOR_BLACK);
+                init_pair(6, COLOR_RED, COLOR_BLACK);
+                attron(COLOR_PAIR(2));
+                mvprintw(5,56,"****************** M E N U ******************");
+                mvprintw(11,56,"REGISTRO........................[1]");
+                mvprintw(12,56,"CONSULTA GENERAL ORDENADA.......[2]");
+                mvprintw(13,56,"VENTAS..........................[3]");
+                mvprintw(14,56,"CONSULTA X ID...................[4]");
+                mvprintw(15,56,"SALIR DEL PROGRAMA..............[5]");
+                attroff(COLOR_PAIR(2));
+                mvprintw(18,56,"OPCION >> ");
+                scanw("%d",&op);
+                switch(op)
+                {
+                         case 1: clear();
+                                 registro();
+                                 getch();
+                                 break;
+
+                        case 2: clear(),
+                                consulta_g();
+                                getch();
+                                break;
+
+                        case 3: clear();
+                                venta();
+                                getch();
+                                break;
+
+                        case 4: clear();
+                                consultaid();
+                                getch();
+                                break;
+
+                        case 5: clear();
+                                mvprintw(25,65,"SALIENDO DEL PROGRAMA...\n");
+                                break;
+                        default:
+                                printw("\n\tESTA OPCION NO EXISTE\n");
+                                break;
+                }
+        }while(op!=5);
+        refresh();
+        getch();
+        endwin();
+        return 0;
+}
+void registro(){ //FUNCION REGISTRO DE CELULARES.
+        //clear();
+        dato d,a;
+        int y,x;
+        FILE *archivo,*B;
+        archivo=fopen("archivo.txt","a");
+        do{
+        x=0;
+        attron(COLOR_PAIR(4));
+        printw("****************** R E G I S T R O ******************");
+        printw("\n\n\tID DESCRIPCION>> ");
+        scanw("%d",&d.ID);
+        B=fopen("archivo.txt","r");
+        while(fread(&a,sizeof(dato),1,B)>0)
+        if(d.ID==a.ID){
+        x=-1;
+        printw("\n\tESTE ID YA EXISTE\n");
+        }
+        }while(x!=0);
+        fclose(B);
+        printw("\tDESCRIPCION>> ");
+        scanw("%s",d.desc);
+        printw("\tPRECIO>> ");
+        scanw("%f",&d.precio);
+        printw("\tEXISTENCIA>> ");
+        scanw("%d",&d.exi);
+        printw("\n");
+        attroff(COLOR_PAIR(4));
+        fwrite(&d,sizeof(dato),1,archivo);
+        //getch();
+        fclose(archivo);
+        }
+
+void consulta_g(){ //FUNCION CONSULTA GENERAL ORDENADA.
+        //clear();
+        FILE *a,*archivo;
+        dato a2,aux[999];
+        int p=13,x,y,z=contador();
+        archivo=fopen("archivo.txt","rb+");
+        if(archivo==NULL){
+                printw("ERROR AL ABRIR EL ARCHIVO\n");
+        }else{
+                attron(COLOR_PAIR(2));
+                 mvprintw(8,38,"****************** C O N S U L T A  _ G E N E R A L _ O R D E N A D A ******************");
+                attroff(COLOR_PAIR(2));
+                while(feof(archivo)==0){
+                 if(fread(&a2,sizeof(dato),1,archivo)>0){
+                                        aux[x]=a2;
+                                        x++;
+                        }
+                }
+                for(x=1;x<z;x++){
+                        for(y=0;y<z-1;y++){
+                               if(strcasecmp(aux[y].desc,aux[y+1].desc)>0){
+                                        a2=aux[y];
+                                        aux[y]=aux[y+1];
+                                        aux[y+1]=a2;
+                                }
+                        }
+                }
+        fclose(archivo);
+        archivo=fopen("archivo.txt","w");
+        for(x=0;x<z;x++)
+        fwrite(&aux[x],sizeof(dato),1,archivo);
+        //imprimir(a);//LLAMANDO FUNCION PARA MOSTRAR DATOS ORDENADOS.
+        fclose(archivo);
+        //imprimir();
+        a=fopen("archivo.txt","r");
+        while(fread(&a2,sizeof(dato),1,a)>0){
+        attron(COLOR_PAIR(3));
+        mvprintw(11,48,"ID>> ");
+        mvprintw(p,48," %d",a2.ID);
+        mvprintw(11,60,"DESCRIPCION>> ");
+        mvprintw(p,60,"%s",a2.desc);
+        mvprintw(11,81,"PRECIO>> ");
+        mvprintw(p,82,"%.2f",a2.precio);
+        mvprintw(11,95,"EXISTENCIA>>");
+        mvprintw(p,98," %d",a2.exi);
+        attroff(COLOR_PAIR(3));
+        p++;
+        }
+     }
+}
+
+
+int contador(){
+int x=0;
+FILE *arch;
+dato d;
+arch=fopen("archivo.txt","rb");
+while(feof(arch)==0){
+        if(fread(&d,sizeof(dato),1,arch))
+                x++;
+}
+fclose(arch);
+return x;
+}
+
+void venta(){ //CONSULTA POR MODELO DE CELULAR.
+        FILE *archivo;
+        dato d;
+        int inicio=0, fin=0, medio=0;
+        int IDbus, pos,r,ban;
+        archivo=fopen("archivo.txt","rb");
+        if(archivo==NULL){
+              printw("ERROR AL ABRIR EL ARCHIVO\n");
+        }else{
+
+        fseek(archivo,sizeof(dato),SEEK_END);
+        fin=ftell(archivo)/sizeof(d);
+        //fread(&d,sizeof(dato),1,archivo);
+        rewind(archivo);
+        ordena();
+        attron(COLOR_PAIR(4));
+        mvprintw(8,50,"****************** V E N T A ******************");
+        mvprintw(9,50,"ID A Buscar>> ");
+        attroff(COLOR_PAIR(4));
+        scanw("%d",&IDbus);
+        clear();
+        pos=recursivo(IDbus,inicio,fin);
+        rewind(archivo);
+        fseek(archivo,pos*sizeof(dato),SEEK_SET);
+        fread(&d,sizeof(dato),1,archivo);
+        if(pos!=-1)
+       {
+                /*printw("\nID>> %d\n",d.ID);
+                printw("DESCRIPCION>> %s\n",d.desc);
+                printw("PRECIO>> %.2f\n",d.precio);
+                printw("EXISTENCIA>> %d\n",d.exi);*/
+                attron(COLOR_PAIR(4));
+                mvprintw(8,50,"****************** V E N T A ******************");
+                attroff(COLOR_PAIR(4));
+                attron(COLOR_PAIR(5));
+                mvprintw(11,48,"ID ");
+                mvprintw(13,48," %d",d.ID);
+                mvprintw(11,60,"DESCRIPCION ");
+                mvprintw(13,60,"%s",d.desc);
+                mvprintw(11,81,"PRECIO ");
+                mvprintw(13,82,"$%.2f",d.precio);
+                mvprintw(11,95,"EXISTENCIA");
+                mvprintw(13,98," %d",d.exi);
+                attroff(COLOR_PAIR(5));
+
+        }
+                mvprintw(15,48,"Cantidad Disponible>> %d",d.exi);
+                             if(d.exi>0){
+                                mvprintw(15,48,"Cuantas Quieres Comprar? >> ");
+                                scanw("%d",&r);
+                                   if(r<d.exi){
+                                      d.exi=d.exi-r;
+                                    }
+                             }
+
+        fclose(archivo);
+    }
+}//VENTA
+
+void ordena(){
+FILE *archivo;
+        dato d,auxi,aa,a;
+        int x,y,zz,z=contador();
+        archivo=fopen("archivo.txt","rb+");
+        if(archivo==NULL){
+                printw("ERROR AL ABRIR EL ARCHIVO\n");
+        }else{
+                fseek(archivo,01,2);
+                zz=ftell(archivo)/sizeof(d);
+
+                for(x=1;x<zz;x++){
+                        for(y=0;y<zz-1;y++){
+                                fseek(archivo,y*sizeof(dato),0);
+                                fread(&a,sizeof(dato),1,archivo);
+                                fseek(archivo,(y+1)*sizeof(dato),0);
+                                fread(&aa,sizeof(dato),1,archivo);
+
+                                if(a.ID>aa.ID){
+                                        auxi=a;
+                                        a=aa;
+                                        aa=auxi;
+                                        fseek(archivo,y*sizeof(dato),0);
+                                        fwrite(&a,sizeof(dato),1,archivo);
+                                        fseek(archivo,(y+1)*sizeof(dato),0);
+                                        fwrite(&aa,sizeof(dato),1,archivo);
+
+                                }
+                        }
+                }
+        }
+}
+void  consultaid(){ //CONSULTA ID FUNCION PARA CONSULTA RECURSIVA
+
+        FILE *archivo;
+        dato d;
+        int inicio=0, fin=0, medio=0;
+        int IDbus, pos;
+        archivo=fopen("archivo.txt","rb");
+        if(archivo==NULL){
+              printw("ERROR AL ABRIR EL ARCHIVO\n");
+        }else{
+
+        fseek(archivo,sizeof(dato),SEEK_END);
+        fin=ftell(archivo)/sizeof(d);
+        //fread(&d,sizeof(dato),1,archivo);
+        rewind(archivo);
+        ordena();
+        mvprintw(8,50,"****************** C O N S U L T A _ P O R _ I D ******************");
+        mvprintw(9,50,"ID A Buscar>> ");
+        scanw("%d",&IDbus);
+        clear();
+        pos=recursivo(IDbus,inicio,fin);
+        rewind(archivo);
+        fseek(archivo,pos*sizeof(dato),SEEK_SET);
+        fread(&d,sizeof(dato),1,archivo);
+        if(pos!=-1)
+       {
+                mvprintw(8,45,"****************** C O N S U L T A _ P O R _ I D ******************");
+                attron(COLOR_PAIR(6));
+                mvprintw(11,48,"ID ");
+                mvprintw(13,48," %d",d.ID);
+                mvprintw(11,60,"DESCRIPCION ");
+                mvprintw(13,60,"%s",d.desc);
+                mvprintw(11,81,"PRECIO ");
+                mvprintw(13,82,"$%.2f",d.precio);
+                mvprintw(11,95,"EXISTENCIA");
+                mvprintw(13,98," %d",d.exi);
+                attroff(COLOR_PAIR(6));
+        }fclose(archivo);
+        }//getch();
+
+}
+int recursivo(int IDbus, int inicio, int fin)
+{
+        FILE *archivo;
+        dato d;
+        archivo=fopen("archivo.txt","rb");
+        rewind(archivo);
+        int medio=(inicio+fin)/2;
+        fseek(archivo,medio*sizeof(dato),SEEK_SET);
+        fread(&d,sizeof(dato),1,archivo);
+        if(inicio>fin)
+        {
+                printw("\n\n\tNO EXISTE\n\n");
+                return -1;
+        }
+        if(IDbus==d.ID){
+                printw("\n\n\tSE ENCONTRO\n\n");
+                 return medio;//regresa la posicion buscada
+        }
+        if(IDbus<d.ID){ //si la id es menor, disminuye
+                return recursivo(IDbus, inicio, medio-1);
+        }
+        if(IDbus>d.ID){ // si la id es mayor, aumenta
+                return recursivo(IDbus, medio+1, fin);
+        }
+fclose(archivo);
+}
+
